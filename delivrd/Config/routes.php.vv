@@ -1,0 +1,84 @@
+<?php
+/**
+ * Routes configuration
+ *
+ * In this file, you set up routes to your controllers and their actions.
+ * Routes are very important mechanism that allows you to freely connect
+ * different URLs to chosen controllers and their actions (functions).
+ *
+ * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
+ * Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
+ *
+ * Licensed under The MIT License
+ * For full copyright and license information, please see the LICENSE.txt
+ * Redistributions of files must retain the above copyright notice.
+ *
+ * @copyright     Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @link          http://cakephp.org CakePHP(tm) Project
+ * @package       app.Config
+ * @since         CakePHP(tm) v 0.2.9
+ * @license       http://www.opensource.org/licenses/mit-license.php MIT License
+ */
+/**
+ * Here, we are connecting '/' (base path) to controller called 'Pages',
+ * its action called 'display', and we pass a param to select the view file
+ * to use (in this case, /app/View/Pages/home.ctp)...
+ */
+	Router::connect('/', array('controller' => 'Dash', 'action' => 'ofindex'));
+/**
+ * ...and connect the rest of 'Pages' controller's URLs.
+ */
+//	Router::connect('/pages/*', array('controller' => 'pages', 'action' => 'display'));
+
+
+	Router::connect('/login', array('plugin' => 'users', 'controller' => 'users', 'action' => 'login'));
+	Router::connect('/editmy', array('plugin' => 'users', 'controller' => 'users', 'action' => 'editmy'));
+	Router::connect('/user-login', array('plugin' => 'users', 'controller' => 'users', 'action' => 'firstlogin'));
+	Router::connect('/reset-password', array('plugin' => 'users', 'controller' => 'users', 'action' => 'reset_password'));
+	Router::connect('/logout', array( 'controller' => 'users', 'action' => 'logout'));
+	Router::connect('/signup/:slug', array( 'plugin' => 'users', 'controller' => 'users', 'action' => 'add'), array('pass' => array("slug")));
+	Router::connect('/laststep/:slug', array( 'plugin' => 'users', 'controller' => 'users', 'action' => 'laststep'), array('pass' => array("slug")));
+	Router::connect('/register', array( 'plugin' => 'users', 'controller' => 'users', 'action' => 'signup'));
+	Router::connect('/firststep', array( 'plugin' => 'users', 'controller' => 'users', 'action' => 'signup_process'));
+    Router::connect('/subscribe', array( 'controller' => 'users', 'action' => 'subscribe'));
+	Router::connect('/locations', array( 'controller' => 'warehouses', 'action' => 'index'));
+	Router::connect('/addlocation', array( 'controller' => 'warehouses', 'action' => 'add'));
+	Router::connect('/editlocation', array( 'controller' => 'warehouses', 'action' => 'edit'));
+	//Router::connect('/listcorders', array( 'controller' => 'orders', 'action' => 'index',1));
+	Router::connect('/listcorders/:product_id/:index', array( 'controller' => 'orders', 'action' => 'index'), array('pass' => array('index', 'product_id')));
+	Router::connect('/orders/:index', array( 'controller' => 'orders', 'action' => 'index'), array('pass' => array('index')));
+	//Router::connect('/listrorders', array( 'controller' => 'orders', 'action' => 'index',2));
+	Router::connect('/createcorder', array( 'controller' => 'orders', 'action' => 'addcord'));
+	Router::connect('/createrorder', array( 'controller' => 'orders', 'action' => 'addrord'));
+	Router::connect('/shopifyorders', array( 'controller' => 'orders', 'action' => 'importshopify'));
+	Router::connect('/transactions-history/:product_id/:cum_qty', array( 'controller' => 'orders_lines', 'action' => 'linesbyproduct'), array('pass' => array('product_id','cum_qty')));
+	Router::connect('/transactionshistory', array( 'controller' => 'orders_lines', 'action' => 'linesbyproduct'));
+	Router::connect('/product-view/:product_id', array('controller' => 'products', 'action' => 'view'), array('pass' => array('product_id')));
+	Router::connect('/product-edit/:product_id', array('controller' => 'products', 'action' => 'edit'), array('pass' => array('product_id')));
+	Router::connect('/count/:product_id', array( 'controller' => 'inventories', 'action' => 'count'), array('pass' => array('product_id')));
+	Router::connect('/inventories/index', array( 'controller' => 'inventories', 'action' => 'index'), array('pass' => array('product_id')));
+	Router::connect('/waves', array('controller' => 'waves', 'action' => 'index'));
+	Router::connect('/waves-edit/:wave_id', array( 'controller' => 'waves', 'action' => 'edit'), array('pass' => array('wave_id')));
+	Router::connect('/waves-view/:wave_id', array( 'controller' => 'waves', 'action' => 'view'), array('pass' => array('wave_id')));
+	Router::connect('/bin-edit/:id', array( 'controller' => 'bins', 'action' => 'edit'), array('pass' => array('id')));
+	Router::connect('/resource-edit/:id', array( 'controller' => 'resources', 'action' => 'edit'), array('pass' => array('id')));
+	Router::connect('/shipments/index/:index/:tracking_number/:createdfrom/:status_id', array('controller' => 'shipments', 'action' => 'index'), array('pass' => array('index', 'tracking_number', 'createdfrom', 'status_id')));
+	//Router::connect('/mobi', array( 'controller' => 'orders_lines', 'action' => 'productmob'));
+       // Router::connect('/waves/*', array( 'controller' => 'Dash', 'action' => 'index'));
+
+/**
+ * Load all plugin routes. See the CakePlugin documentation on
+ * how to customize the loading of plugin routes.
+ */
+CakePlugin::routes();
+
+/**
+ * Load the CakePHP default routes. Only remove this if you do not want to use
+ * the built-in default routes.
+ */
+require CAKE . 'Config' . DS . 'routes.php';
+
+define('SITEURL',FULL_BASE_URL.router::url('/',false));
+Router::parseExtensions('pdf');
+
+

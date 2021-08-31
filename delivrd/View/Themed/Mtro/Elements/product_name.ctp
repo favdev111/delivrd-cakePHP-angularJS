@@ -1,0 +1,1 @@
+<?php echo $this->Html->link(strlen($name) > 35 ? substr($name,0, 35). "..." : $name, array('controller' => 'products', 'action' => 'view', $id), array('data-toggle' => (strlen($name) > 35 ? 'tooltip' : ''), 'title' => (strlen($name) > 35 ? $name : ''))); ?>

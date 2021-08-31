@@ -1,0 +1,1235 @@
+<?php
+App::uses('AppController', 'Controller');
+/**
+ * Inventories Controller
+ *
+ * @property Inventory $Inventory
+ * @property PaginatorComponent $Paginator
+ */
+class InventoriesController extends AppController {
+
+	/**
+	 * Components
+	 *
+	 * @var array
+	 */
+	public $uses = array('Inventory');
+	public $components = array('Paginator','Search.Prg','Csv.Csv','Session',);
+	public $theme = 'Mtro';
+
+	/**
+	 * index method
+	 *
+	 * @return void
+	 */
+	public function index($product_id = null) { 
+		$this->layout = 'mtrd';
+		$this->loadModel('Serial');
+		$this->Paginator->settings = array(
+        'limit' => 10, 'order' => array('Inventory.modified' => 'DESC')
+    	);
+    	$conditions = array();
+    	$conditions['Product.user_id'] =  $this->Auth->user('id');
+    	$this->Inventory->recursive = 2;
+
+    	if((!empty($this->request->query['ofindex'])) && $this->request->query['ofindex'] == 1) {
+    		$this->Session->write('warehouse_id', '');
+    		$this->Session->write('searchby', '');
+    		$this->Session->write('location_id', '');
+    		$this->Session->write('serialnumber', '');
+    	}
+    	if(empty($this->params->data['Inventory']['searchby'])) {
+    		$this->Session->write('location_id', '');
+    		$this->Session->write('serialnumber', '');
+    	}
+
+		if (isset($product_id))
+		{ 
+			$conditions['Inventory.product_id'] =  $product_id;
+			$this->set('inventories', $this->Paginator->paginate($conditions));
+	    } else {
+	    	if (!empty($this->params->data['Inventory']['warehouse_id']) || !empty($this->params->data['Inventory']['searchby']))
+			{ 
+				$this->Session->write('warehouse_id', $this->params->data['Inventory']['warehouse_id']);
+				$this->Session->write('searchby', $this->params->data['Inventory']['searchby']);
+				$this->Session->write('location_id', $this->params->data['Inventory']['location_id']);
+				$this->Session->write('serialnumber', $this->params->data['Inventory']['serialnumber']);
+			}
+
+			if (!empty($this->Session->read('searchby')))
+			{
+				$conditions = array();
+    			$conditions['Inventory.user_id'] =  $this->Auth->user('id');
+				$conditions['Product.name'] = $this->Session->read('searchby');
+				if(!empty($this->Session->read('location_id')))
+				$conditions['Inventory.warehouse_id'] =  $this->Session->read('location_id');
+				if (!empty($this->Session->read('warehouse_id')))
+				{ 
+					$conditions['Inventory.warehouse_id'] =  $this->Session->read('warehouse_id');
+					$inventories = $this->Paginator->paginate($conditions);
+			    }
+				$inventories = $this->Paginator->paginate($conditions);
+				if(empty($inventories) && $this->Session->read('serialnumber')) {
+					$serial_no = $this->Serial->find('first',array('conditions' => array('serialnumber' => $this->Session->read('serialnumber')),'recursive' => -1));
+					$conditions = array();
+    				$conditions['Inventory.user_id'] =  $this->Auth->user('id');
+					$conditions['Product.id'] = $serial_no['Serial']['product_id'];
+					$conditions['Inventory.warehouse_id'] =  $this->Session->read('location_id');
+					if (!empty($this->Session->read('warehouse_id')))
+					{ 
+						$conditions['Inventory.warehouse_id'] =  $this->Session->read('warehouse_id');
+						$inventories = $this->Paginator->paginate($conditions);
+				    }
+					$inventories = $this->Paginator->paginate($conditions);
+				}
+				if(empty($inventories)) {
+					$conditions = array();
+    				$conditions['Inventory.user_id'] =  $this->Auth->user('id');
+					$conditions['Product.sku'] = $this->Session->read('searchby');
+					if (!empty($this->Session->read('warehouse_id')))
+					{ 
+						$conditions['Inventory.warehouse_id'] =  $this->Session->read('warehouse_id');
+						$inventories = $this->Paginator->paginate($conditions);
+				    }
+					$inventories = $this->Paginator->paginate($conditions);
+				}
+				if(empty($inventories)) {
+					$conditions = array();
+    				$conditions['Inventory.user_id'] =  $this->Auth->user('id');
+					$conditions['Product.barcode'] = $this->Session->read('searchby');
+					if (!empty($this->Session->read('warehouse_id')))
+					{ 
+						$conditions['Inventory.warehouse_id'] =  $this->Session->read('warehouse_id');
+						$inventories = $this->Paginator->paginate($conditions);
+				    }
+					$inventories = $this->Paginator->paginate($conditions);
+				}
+			}else {
+		    	$inventories = $this->Paginator->paginate($conditions);
+		    } 
+
+			// if (!empty($this->Session->read('warehouse_id')))
+			// { 
+			// 	$conditions['Inventory.warehouse_id'] =  $this->Session->read('warehouse_id');
+			// 	$inventories = $this->Paginator->paginate($conditions);
+		 //    }else {
+		 //    	$inventories = $this->Paginator->paginate($conditions);
+		 //    }
+			
+			$warehouses = $this->Inventory->Warehouse->find('list',array('conditions' => array('Warehouse.user_id' => $this->Auth->user('id'))));
+			$this->set('warehouses', $warehouses);
+			$this->set('inventories', $inventories);
+			
+			$inv = $this->Paginator->paginate($conditions);
+			if(!empty($this->Session->read('serialnumber'))) {
+				$serial_no = $this->Serial->find('first',array('conditions' => array('serialnumber' => $this->Session->read('serialnumber')),'recursive' => -1));
+			}
+				
+		}
+
+		$products = $this->Inventory->Product->find('all', array('conditions' => array('Product.user_id' => $this->Auth->user('id'))));
+		$colors = $this->Inventory->Product->Color->find('list',array('conditions' => array('user_id' => $this->Auth->user('id'))));				
+		$sizes = $this->Inventory->Product->Size->find('list',array('conditions' => array('user_id' => $this->Auth->user('id'))));
+		
+		$this->set(compact('prodintrans','sizes','colors','serial_no'));
+		
+	}
+
+	public function unique_pdts() { 
+		$this->layout = 'mtrd';
+		$this->Paginator->settings = array(
+        'limit' => 10, 'order' => array('Inventory.modified' => 'DESC'),
+    	);
+		if ( isset($this->request->query['product_id']))
+		{
+			$conditions['Inventory.product_id'] =  $this->request->query['product_id'];
+			$this->set('inventories',$this->paginate(array('conditions' => $conditions, 'contain' => array('Product'))));
+			
+	    } else {
+		$this->Inventory->recursive = 2;
+
+		$this->Inventory->virtualFields['total'] = 'round(sum(Inventory.quantity), 2)';
+
+		$inventory = $this->Inventory->find('all', array(
+				  'conditions' => array('Product.user_id' => $this->Auth->user('id'),
+					  	  'OR' => array(
+                          	'Product.safety_stock !=' => 0,
+                          	'Product.reorder_point !='=> 0
+                          	),
+	  					  ),
+				  'fields'  => array(
+                        'Product.id',
+                        'Product.name',
+                        'Product.safety_stock',
+                        'Product.reorder_point',
+                        'Product.sku',
+                        'Product.imageurl ',
+                        'Inventory.product_id',
+                        'Inventory.total',
+                    ),
+			'group' => 'Inventory.product_id HAVING Product.safety_stock > sum(Inventory.quantity) OR Product.reorder_point > sum(Inventory.quantity)',
+			'recursive' => 1));
+		
+			$page = ! empty( $_GET['page'] ) ? (int) $_GET['page'] : 1;
+			$total = count($inventory); //total items in array    
+			$limit = 9; 
+			$totalPages = ceil( $total/ $limit ); //calculate total pages
+			$page = max($page, 1); //get 1 page when $_GET['page'] <= 0
+			$page = min($page, $totalPages); //get last page when $_GET['page'] > $totalPages
+			$offset = ($page - 1) * $limit;
+			
+			if( $offset < 0 ) $offset = 0;
+			$inventory = array_slice($inventory, $offset, $limit);
+	        $this->set('inventories', $inventory);
+	        $this->set(compact('totalPages', 'page'));
+		
+		}
+		
+
+		$products = $this->Inventory->Product->find('all', array('conditions' => array('Product.user_id' => $this->Auth->user('id'))));
+		$colors = $this->Inventory->Product->Color->find('list',array('conditions' => array('user_id' => $this->Auth->user('id'))));				
+		$sizes = $this->Inventory->Product->Size->find('list',array('conditions' => array('user_id' => $this->Auth->user('id'))));
+		
+		$this->set(compact('prodintrans','sizes','colors'));
+
+	}
+        
+    /**
+	 * delete method
+	 *
+	 * @throws NotFoundException
+	 * @param string $id
+	 * @return void
+	 */
+	     
+    public function delete($id = null) { 
+		$this->Inventory->id = $id;
+		$this->loadModel('OrdersLine');
+			$inventory = $this->Inventory->find('first', array('conditions' => array('Inventory.id'  => $id)));
+			$order_lines = $this->OrdersLine->find('all', array('conditions' => array('OrdersLine.product_id'  => $inventory['Inventory']['product_id'], 'OrdersLine.warehouse_id' => $inventory['Inventory']['warehouse_id']), 'recursive' => -1));
+			
+		if (!$this->Inventory->exists()) {
+			throw new NotFoundException(__('Invalid inventory record'));
+		}
+		$this->request->allowMethod('post', 'delete');
+		if ($this->Inventory->delete($id)) {
+			foreach($order_lines as $order_line) {
+				$this->OrdersLine->delete($order_line['OrdersLine']['id']);
+			}
+
+			$this->Session->setFlash(__('The inventory record has been deleted.'),'default',array('class'=>'alert alert-success'));
+		} else {
+			$this->Session->setFlash(__('The inventory record could not be deleted. Please, try again.'),'default',array('class'=>'alert alert-danger'));
+		}
+		return $this->redirect(array('action' => 'index'));
+	}
+
+/**
+ * view method
+ *
+
+
+
+
+
+/**
+ * edit method
+ *
+ * @throws NotFoundException
+ * @param string $id
+ * @return void
+ */
+	public function count($id = null, $quantity = null,$import = null) {
+		$this->layout = 'mtrd';
+	
+		$this->checkinventoryexist($id);
+		if (!$this->Inventory->exists($id)) {
+			throw new NotFoundException(__('Invalid inventory'));
+		}
+		$sentqty = 0;
+		$recqty = 0;
+		if(isset($quantity))
+		{
+			$this->request->data['Inventory']['quantity'] = $quantity;
+		}
+		$this->Inventory->recursive = 2;
+		$loptions = array('conditions' => array('Inventory.' . $this->Inventory->primaryKey => $id));			
+		$current_inv = $this->Inventory->find('first', $loptions);
+		$product = $this->Inventory->find('first', array('conditions' => array('Product.id'  => $current_inv['Inventory']['product_id'])));
+		
+		//if $quantity is set, we need to complete $this->request->data
+                if(isset($quantity)) {
+                    $this->request->data['Inventory']['id'] = $id;
+                    $this->request->data['Inventory']['quantity'] = $quantity;
+                    //$this->request->data['Inventory']['damaged_qty'] = 0;
+                    $this->request->data['Inventory']['comments'] = 'By import file';
+                }
+                
+		if ($this->request->is(array('post', 'put')) || isset($quantity)) {
+		//pr($this->request->data);die;
+
+		// if user has locations active, we get warehouse from him. otherwise, use users's default warehouse
+     
+		$delta = $current_inv['Inventory']['quantity'] - $this->request->data['Inventory']['quantity'];
+		if($delta > 0)
+		{
+		$sentqty = abs($delta);
+		}
+		if($delta < 0)
+		{
+		$recqty = abs($delta);
+		}
+                
+        //check if damaged qty is enables
+                
+		//$this->request->data('Inventory.warehouse_id',$warehouseid);
+		if ($this->Inventory->save($this->request->data)) {
+		
+		
+			$this->loadModel('OrdersLine');
+			$data = array(
+			'OrdersLine' => array(
+				'order_id' => 4294967294,
+				'line_number' => 1,
+				'type' => 3,
+				'product_id'  => $current_inv['Inventory']['product_id'],
+				'quantity' => $this->request->data['Inventory']['quantity'],
+				'receivedqty' => $recqty,
+				'damagedqty' => 0,
+				'sentqty' => $sentqty,
+				'unit_price' => $product['Product']['value'],
+				'total_line' => $product['Product']['value'] * abs($delta),
+				'foc' => '',
+				'warehouse_id' => $current_inv['Inventory']['warehouse_id'],
+				'return' => '',
+				'comments' => $this->request->data['Inventory']['comments'],
+				'user_id' => $this->Auth->user('id')
+			)
+			);
+
+			// prepare the model for adding a new entry
+			$this->OrdersLine->create();
+			// save the data
+			$this->OrdersLine->save($data);
+		
+			$this->Session->setFlash(__('Inventory quantity update successfully'),'default',array('class'=>'alert alert-success'));
+			if($import == null)
+                {
+                  return $this->redirect(array('action' => 'index'));
+                } else {
+                    return;
+                }
+		} else {
+				$this->Session->setFlash(__('Inventory quantity could not be updated. Please, try again.'),'default',array('class'=>'flash-error'));
+			}
+		} else {
+			$options = array('conditions' => array('Inventory.' . $this->Inventory->primaryKey => $id));
+			$this->request->data = $this->Inventory->find('first', $options);
+		}
+		$products = $this->Inventory->Product->find('all', array('contain' => array('Product'), 'fields' => array('Product.name', 'Product.imageurl')));
+		
+		
+		//$dcopUsers = $this->Inventory->DcopUser->find('list');
+		$colors = $this->Inventory->Product->Color->find('list',array('conditions' => array('Color.user_id' => $this->Auth->user('id'))));				
+		$sizes = $this->Inventory->Product->Size->find('list',array('conditions' => array('Size.user_id' => $this->Auth->user('id'))));
+		 
+		$warehouses = $this->Inventory->Warehouse->find('list',array('conditions' => array('Warehouse.id' => $current_inv['Inventory']['warehouse_id'],'Warehouse.user_id' => $this->Auth->user('id'))));
+		//$warhouse_name = 
+	//Debugger::dump($product);
+	
+		$this->set(compact('product','sizes','colors','warehouses'));
+	}
+	
+	public function add() { 
+		$this->layout = 'mtrd';
+		$this->loadModel('Product');
+		$this->loadModel('Warehouse');
+		
+		if ($this->request->is(array('post', 'put'))) {
+
+			$damaged_qty = ($this->Session->read('managedamaged') != 1) ? '' : $this->request->data['Inventory']['damaged_qty'];
+			
+			$pdt = $this->Product->find('list',array('conditions' => array('Product.id' => $this->request->data['Inventory']['product_id'])));
+			$warehouse = $this->Warehouse->find('list',array('conditions' => array('Warehouse.id' => $this->request->data['Inventory']['warehouse_id'])));
+
+			//check if inventory record already exists. if it does - do count. outherwise - create new one
+	        $inv_id = $this->getinventoryid($this->request->data['Inventory']['product_id'],$this->request->data['Inventory']['warehouse_id']);
+
+			if(empty($inv_id))
+			{
+				//inventory record does not exist, create a new one
+				$createinvrec = $this->createinventoryrecord($this->request->data['Inventory']['product_id'],$this->request->data['Inventory']['warehouse_id'],$this->request->data['Inventory']['quantity'], $damaged_qty, $this->request->data['Inventory']['comments']);
+	                
+	                } else {
+				$this->Session->setFlash(__('Inventory record already exists for product %s location %s. Inventory not updated. Use inventory count to update existing inventory records.',$pdt[$this->request->data['Inventory']['product_id']],$warehouse[$this->request->data['Inventory']['warehouse_id']]),'default',array('class'=>'alert alert-danger'));				
+				return $this->redirect(array('action' => 'index'));
+			}
+		
+	        if($createinvrec == 0){
+				$this->Session->setFlash(__('Inventory quantity update successfully'),'default',array('class'=>'alert alert-success'));
+				return $this->redirect(array('action' => 'index'));
+			} else {
+				$this->Session->setFlash(__('Inventory quantity could not be updated. Please, try again.'),'default',array('class'=>'alert alert-danger'));
+			}
+		} 
+                
+                
+        if(isset($this->request->params['pass']['0']))
+        {
+			$products = $this->Inventory->Product->find('list',array('conditions' => array('Product.id' => $this->request->params['pass']['0'], 'Product.user_id' => $this->Auth->user('id'))));
+        } else {
+        	$products = $this->Inventory->Product->find('list',array('conditions' => array('Product.user_id' => $this->Auth->user('id'))));
+        }
+		
+		//$dcopUsers = $this->Inventory->DcopUser->find('list');
+		//$colors = $this->Inventory->Product->Color->find('list',array('conditions' => array('user_id' => $this->Auth->user('id'))));				
+		//$sizes = $this->Inventory->Product->Size->find('list',array('conditions' => array('user_id' => $this->Auth->user('id'))));
+		$warehouses = $this->Inventory->Warehouse->find('list',array('conditions' => array('user_id' => $this->Auth->user('id'))));
+		
+		$this->set(compact('products','warehouses'));
+	}
+	
+	public function grgi($id = null, $grgi = null,$quantity = null) {
+		$this->layout = 'mtrd';
+               
+		$this->checkinventoryexist($id);
+		if (!$this->Inventory->exists($id)) {
+			throw new NotFoundException(__('Invalid inventory'));
+		}
+	
+		$sentqty = 0;
+		$recqty = 0;
+		$this->Inventory->recursive = 2;
+		$loptions = array('conditions' => array('Inventory.' . $this->Inventory->primaryKey => $id));			
+		$current_inv = $this->Inventory->find('first', $loptions);
+                $availableinv = $current_inv['Inventory']['quantity'];
+                $sourcesafetystock = $current_inv['Product']['safety_stock'];
+                $sourcereorderpoint = $current_inv['Product']['reorder_point'];
+		$product = $this->Inventory->find('first', array('conditions' => array('Product.id'  => $current_inv['Inventory']['product_id'])));
+		
+	  if ($this->request->is(array('post', 'put'))) {
+         if($this->request->data['Inventory']['tquantity'] < 0 )
+         {
+            $this->Session->setFlash(__('Transaction quantity must be greater than 0.'),'default',array('class'=>'alert alert-danger'));
+            return $this->redirect(array('action' => 'grgi',$id));
+         }
+		if($availableinv < $this->request->data['Inventory']['tquantity'] && isset($this->request->data['Inventory']['ttype']) && $this->request->data['Inventory']['ttype'] == 'GI')
+            {
+                $this->Session->setFlash(__('You are trying to issue a quantity greater than quantity available.'),'default',array('class'=>'alert alert-danger'));
+                return $this->redirect(array('action' => 'grgi',$id));
+            }
+		if(isset($this->request->data['Inventory']['ttype']))
+		{
+			$ttype = $this->request->data['Inventory']['ttype'];
+			$tquantity = $this->request->data['Inventory']['tquantity'];
+                            //if user has locations enabled, we get warehouse from grgi page
+                            if($this->Session->read('locationsactive') == 1)
+                            {
+                            $warehouseid = $this->request->data['Inventory']['warehouse_id'];
+                            } else {
+                            $warehouseid = $this->Session->read('default_warehouse');
+                            }
+		} else {
+			// function was called from another function rather than from GRGI page
+			$ttype = $grgi;
+			$tquantity = $quantity;
+			$this->request->data('Inventory.id',$id);
+		}
+		if($ttype == 'GI')
+		{
+				$direction = -1;
+				$linetype = 5;
+				$sentqty = $tquantity;
+                                if(!isset($warehouseid))
+                                    $warehouseid = $this->request->data['Inventory']['warehouse_id_from'];
+				
+		}
+		else if($ttype == 'GR')
+		{
+			$direction = 1;	
+			$linetype = 6;
+			$recqty = $tquantity;
+            if(!isset($warehouseid))
+             $warehouseid = $this->request->data['Inventory']['warehouse_id_to'];				
+				
+		} else {
+			$this->Session->setFlash(__('You did not select Issue from Inventory or Receive to Inventory. Please try again.'),'default',array('class'=>'alert alert-danger'));
+			return $this->redirect(array('action' => 'grgi',$id));
+		}
+				
+		$new_inv = $current_inv['Inventory']['quantity'] + $direction * $tquantity;
+		$this->request->data('Inventory.quantity',$new_inv);
+		
+		if ($this->Inventory->save($this->request->data)) {
+                   
+		if($current_inv['Inventory']['quantity'] == 0)
+            $current_inv['Inventory']['quantity'] = $this->request->data['Inventory']['tquantity'];
+		
+			$this->loadModel('OrdersLine');
+			$data = array(
+			'OrdersLine' => array(
+				'order_id' => 4294967294,
+				'line_number' => 1,
+				'type' => $linetype,
+				'product_id'  => $current_inv['Inventory']['product_id'],
+				'quantity' => $current_inv['Inventory']['quantity'],
+				'receivedqty' => $recqty,
+				'damagedqty' => 0,
+				'sentqty' => $sentqty,
+				'unit_price' => $product['Product']['value'],
+				'total_line' => $product['Product']['value'] * abs($this->request->data['Inventory']['tquantity']),
+				'foc' => '',
+				'warehouse_id' => $warehouseid,
+				'return' => '',
+				'comments' => $this->request->data['Inventory']['comments'],
+				'user_id' => $this->Auth->user('id')
+			)
+			);
+
+		// save the data
+		$this->OrdersLine->create();
+		$linecreated = $this->OrdersLine->save($data);
+			if(!isset($grgi))
+			{
+				$this->Session->setFlash(__('Inventory quantity update successfully'),'default',array('class'=>'alert alert-success'));
+				return $this->redirect(array('action' => 'index'));
+			}
+			} else {
+				$this->Session->setFlash(__('Inventory quantity could not be updated. Please, try again.'),'default',array('class'=>'alert alert-danger'));
+			}
+	  } 
+	  else {
+			$options = array('conditions' => array('Inventory.' . $this->Inventory->primaryKey => $id));
+			$this->request->data = $this->Inventory->find('first', $options);
+	  }
+		$products = $this->Inventory->Product->find('all', array('contain' => array('Product'), 'fields' => array('Product.name', 'Product.imageurl')));
+		
+		$warehouses = $this->Inventory->Warehouse->find('list',array('conditions' => array('Warehouse.id' => $current_inv['Inventory']['warehouse_id'],'Warehouse.user_id' => $this->Auth->user('id'))));
+	 
+	    $this->set(compact('product','warehouses','availableinv','sourcesafetystock','sourcereorderpoint'));
+	}
+
+	public function transfer($id = null) {
+		$this->layout = 'mtrd';
+		//$this->checkinventoryexist($id);
+		//if (!$this->Inventory->exists($id)) {
+		//	throw new NotFoundException(__('Invalid inventory'));
+		//	}
+                
+                            
+		$sentqty = 0;
+		$recqty = 0;
+		$this->Inventory->recursive = 2;
+		//$loptions = array('conditions' => array('Inventory.' . $this->Inventory->primaryKey => $id));			
+		//$current_inv = $this->Inventory->find('first', $loptions);
+		//$product = $this->Inventory->find('first', array('contain' => array('Inventory'), 'fields' => array('Inventory.id'),'conditions' => array('Product.id'  => $current_inv['Inventory']['product_id'])));
+		$loptions = array('conditions' => array('Inventory.' . $this->Inventory->primaryKey => $id));	
+		$sourceinv = $this->Inventory->find('first', $loptions);
+        $availableinv = $sourceinv['Inventory']['quantity'];
+        $sourcesafetystock = $sourceinv['Product']['safety_stock'];
+        $sourcereorderpoint = $sourceinv['Product']['reorder_point'];
+		if ($this->request->is(array('post', 'put'))) {
+
+
+		if($availableinv < $this->request->data['Inventory']['tquantity'])
+        {
+            $this->Session->setFlash(__('You are trying to transfer a quantity greater than quantity available.'),'default',array('class'=>'alert alert-danger'));
+            return $this->redirect(array('action' => 'transfer',$id));
+        }
+
+        if($sourceinv) {
+        	$this->grgi($sourceinv['Inventory']['id'], "GI",$this->request->data['Inventory']['tquantity']);
+        }         
+
+		$destinv = $this->Inventory->find('first',array('contain' => array('Inventory'), 'fields' => array('Inventory.id'),'conditions' => array('Inventory.product_id'  => $this->request->data['Inventory']['product_id'],'Inventory.warehouse_id'=> $this->request->data['Inventory']['warehouse_id_to'] )));
+
+		if($destinv) {
+			$this->grgi($destinv['Inventory']['id'], "GR",$this->request->data['Inventory']['tquantity']);
+		}
+
+		$this->Session->setFlash(__('Inventory quantity update successfully'),'default',array('class'=>'alert alert-success'));
+				return $this->redirect(array('action' => 'index'));
+	
+		} else {
+			
+		}
+		
+		//$products = $this->Inventory->Product->find('list',array('conditions' => array('Product.user_id' => $this->Auth->user('id'))));
+		
+		
+		//$dcopUsers = $this->Inventory->DcopUser->find('list');
+		//$colors = $this->Inventory->Product->Color->find('list',array('conditions' => array('user_id' => $this->Auth->user('id'))));				
+		$source_warehouse = $this->Inventory->Warehouse->find('list',array('conditions' => array('Warehouse.id' => $sourceinv['Warehouse']['id'],'Warehouse.user_id' => $this->Auth->user('id'))));
+		$product = $this->Inventory->Product->find('list',array('conditions' => array('Product.id' => $sourceinv['Product']['id'],'Product.user_id' => $this->Auth->user('id'))));
+              
+		//$sizes = $this->Inventory->Product->Size->find('list',array('conditions' => array('user_id' => $this->Auth->user('id'))));
+		
+		$whs_inv_records = $this->Inventory->find('list',array('contain' => array('Inventory'), 'fields' => array('Inventory.warehouse_id'),'conditions' => array('Inventory.user_id' => $this->Auth->user('id'),'Inventory.product_id' => $sourceinv['Product']['id'])));
+		//If we have only one inventory record, we cannot transfer anything, we throw error
+                
+        if(sizeof($whs_inv_records) == 1)
+        {
+            $this->Session->setFlash(__('Product is defined for a single inventory location. You cannot transfer it to another location.'),'default',array('class'=>'alert alert-danger'));
+            return $this->redirect(array('action' => 'index'));
+        }
+        //we need to remove source warehouse abc
+		$key = array_search($sourceinv['Warehouse']['id'], $whs_inv_records);
+		unset($whs_inv_records[$key]);
+		$warehouses = $this->Inventory->Warehouse->find('list',array('conditions' => array('Warehouse.id' => $whs_inv_records)));
+	
+		$this->set(compact('product','warehouses','source_warehouse','availableinv','sourcesafetystock','sourcereorderpoint'));
+	}
+	
+	 public function exportcsv() {
+		
+    $inventories = $this->Inventory->find('all',array('conditions' => array('Inventory.user_id' => $this->Auth->user('id'))));
+
+    $_serialize = 'inventories';
+    $_header = array('SKU','ProductName','Location' ,'AvailableStock');
+    $_extract = array('Product.sku', 'Product.name', 'Warehouse.name','Inventory.quantity');
+
+	$file_name = "Delivrd_".date('Y-m-d-His')."_inventory.csv";
+	$this->response->download($file_name);
+    $this->viewClass = 'CsvView.Csv';
+    $this->set(compact('inventories', '_serialize', '_header', '_extract'));
+	}
+	
+	 public function checkinventoryexist($id = null) {
+			$this->Inventory->recursive = 1;
+			if(isset($id))
+				$hasinventory = $this->Inventory->findById($id);
+			
+		if (!$hasinventory) {
+			$this->Session->setFlash(__('Product does not exist'),'default',array('class'=>'alert alert-danger'));
+			return $this->redirect(array('action' => 'index'));
+		}
+		
+	}
+	
+	public function getinventoryid($product_id = null,$warehouse_id = null)
+	{
+		$this->Inventory->recursive = 1;
+		$inv_id = $this->Inventory->find('first',array('contain' => array('Inventory'), 'fields' => array('Inventory.id'),'conditions' => array('Inventory.product_id'  => $product_id,'Inventory.warehouse_id'=> $warehouse_id )));
+		if(!empty($inv_id))
+		{
+			return $inv_id['Inventory']['id'];
+		} else {
+			return false;
+		}
+	}
+	
+	
+	public function createinventoryrecord($pid = null,$warehouseid = null, $quantity = null, $dquantity = null, $comments = null)
+	{
+
+	    unset($this->request->data['Inventory']['id']);
+		$this->Inventory->create();
+		//$this->request->data('Inventory.user_id',$this->Auth->user('id'));
+		//$this->request->data('Inventory.dcop_user_id',$this->Auth->user('id'));
+		//$this->request->data('Inventory.product_id', $pid);
+		//$this->request->data('Inventory.quantity', $quantity);
+		//$this->request->data('Inventory.warehouse_id', $warehouseid);
+                    
+        $this->Inventory->set('user_id',$this->Auth->user('id'));
+		$this->Inventory->set('dcop_user_id',$this->Auth->user('id'));
+		$this->Inventory->set('product_id', $pid);
+		$this->Inventory->set('quantity', $quantity);
+		$this->Inventory->set('warehouse_id', $warehouseid);
+        if($dquantity != null)
+           $this->Inventory->set('damaged_qty', $dquantity);   
+                    
+        //get product value
+        $this->loadModel('Product');
+        $this->Product->recursive = 1;
+        $product = $this->Product->findById($pid);
+        $inventoryrecordcreated = $this->Inventory->save($this->request->data);
+
+        if ($inventoryrecordcreated) {
+        $this->loadModel('OrdersLine');
+			$data = array(
+			'OrdersLine' => array(
+				'order_id' => 4294967294,
+				'line_number' => 1,
+				'type' => 3,
+				'product_id'  => $pid,
+				'quantity' => $quantity,
+				'receivedqty' => $quantity,
+				'damagedqty' => 0,
+				'sentqty' => 0,
+				'unit_price' => $product['Product']['value'],
+				'total_line' => $product['Product']['value'] * abs($quantity),
+				'foc' => '',
+				'warehouse_id' => $warehouseid,
+				'return' => '',
+				'comments' => $comments,
+				'user_id' => $this->Auth->user('id')
+				)
+			);
+
+		// save the data
+		$this->OrdersLine->save($data);
+	        unset($this->Inventory);
+	        return 0;
+		} else {
+			 $this->Session->setFlash(__('The product inventory record could not be saved. Please, try again.'),'default',array('class'=>'alert alert-danger'));
+		}		
+	
+	}
+	
+	public function uploadcsv() {
+		$this->layout = 'mtru';
+		
+		//$target_path = '/var/www/html/uploads/';
+		if ($this->request->is('post')) {
+			$target_path = WWW_ROOT."uploads/";
+			$target_path = $target_path . basename( $_FILES['uploadedfile']['name']); 
+
+			if(move_uploaded_file($_FILES['uploadedfile']['tmp_name'], $target_path)) {
+			//	echo "The file ".  basename( $_FILES['uploadedfile']['name']). 
+			//	" has been uploaded";
+			//	echo "we boot is $this->webroot";
+			
+			$filesg = array( 'files' => array(array(
+				"name" => $_FILES['uploadedfile']['name'],
+				"size" => $_FILES['uploadedfile']['size'],
+				"thumbnailUrl" => "/theme/Mtro/assets/admin/layout/img/csv.png"
+			)));
+			header('Content-Type: application/json');
+			echo json_encode($filesg,JSON_PRETTY_PRINT);
+			exit();	
+			
+			//$this->importcsv($target_path,$_FILES['uploadedfile']['name'],$_FILES['uploadedfile']['size']);
+				
+			} else{
+			$filesg = array( 'files' => array(array(
+				"name" => $_FILES['uploadedfile']['name'],
+				"size" => $_FILES['uploadedfile']['size'],
+				"error" => "Could not upload file. Please try again",
+			)));
+			header('Content-Type: application/json');
+			echo json_encode($filesg,JSON_PRETTY_PRINT);
+			exit();	
+			}
+		}
+	}
+
+public function importcsv($filename = null) {
+		ini_set("auto_detect_line_endings", "1");
+		$this->layout = 'mtru';
+	$options = array(
+    // Refer to php.net fgetcsv for more information
+    'length' => 0,
+    'delimiter' => ',',
+    'enclosure' => '"',
+    'escape' => '\\',
+    // Generates a Model.field headings row from the csv file
+    'headers' => false, 
+    // If true, String $content is the data, not a path to the file
+    'text' => false,
+    );
+    $newproducts = array();
+    $newinventory = array();
+    
+//	$lastorderdata['Order']['external_orderid'] = '';
+//	$content = $filename;
+   $content = WWW_ROOT."uploads/".$filename;
+   
+   //first, get number of columns to see if this is a basic file or full file
+   $numcols = 0;
+   $file = fopen($content, "r"); 
+   while ($line = fgetcsv($file))
+  {
+		$numcols = count($line);
+                 if($numcols != 4)
+                    {
+                        $this->showimporterror("CSV file should have 4 columns, but line ".$line[0]." has ".$numcols." columns");
+                        fclose($file);
+                    }
+  }
+   fclose($file);
+  
+   //echo "contesn is ". $content;
+ //  $content = WWW_ROOT."uploads/uploadt2707.csv";
+//	echo "file is in import ".$content;
+	
+		$filedata = $this->Csv->import($content, array('Inventory.sku', 'Inventory.name', 'Inventory.location', 'Inventory.quantity'));
+	
+		$errorstr = ".";
+		$numinvs = count($filedata);
+		
+		foreach ($filedata as $key=>$inventorydata)
+		{
+			
+			if($key > 0)
+			{
+			//Debugger::dump($productdata);
+			// if(!is_numeric($inventorydata['Importfile']['LineNumber']))
+			// {
+			// 	$this->showimporterror("Line number does not exist");
+				
+			// }
+	
+	
+		if(empty($inventorydata['Inventory']['sku'] || empty($inventorydata['Inventory']['warehouse_id'] || empty($inventorydata['Inventory']['quantity']))))
+		{
+			$this->showimporterror("SKU or warehouse number are missing in line ".$key);
+			
+		}
+		
+		$pid = $this->Inventory->Product->find('first', array('contain' => array('Product'), 'fields' => array('Product.id'),'conditions' => array('Product.sku' => $inventorydata['Inventory']['sku'],'Product.user_id' => $this->Auth->user('id'))));
+		if(empty($pid))
+                {
+                    $this->showimporterror("SKU ".$inventorydata['Inventory']['sku']." does not exist, line number ".$key);
+                }
+                $warhouseid = $this->Inventory->Warehouse->find('list', array('conditions' => array('Warehouse.name' => $inventorydata['Inventory']['location'],'Warehouse.user_id' => $this->Auth->user('id'))));
+              	if(empty($warhouseid))
+                {
+                    $this->showimporterror("Location ".$inventorydata['Inventory']['location']."in line number ".$key." does not exist");
+                }	
+				
+		$inv_id = $this->getinventoryid($pid['Product']['id'],key($warhouseid));
+		
+	//we already have an inventory record for this line, we do a regular count
+		if(!empty($inv_id))
+		{
+			
+			$this->count($inv_id,$inventorydata['Inventory']['quantity'],1);
+		} else {
+		//inventory record does not exist, create a new one
+			$this->createinventoryrecord($pid['Product']['id'],key($warhouseid),$inventorydata['Inventory']['quantity']);
+		}
+	  }
+    }	
+ $this->Session->setFlash('Inventory quantity added successfully','default',array('class'=>'alert alert-success'));
+ return $this->redirect(array('controller' => 'inventories', 'action' => 'index'));
+}	
+
+    public function showimporterror($errstr = null)
+    {
+
+	$gotoimport = '<a href="/inventories/uploadcsv" class="btn blue-hoki fileinput-button"><i class="fa fa-cloud-upload"></i> Go to upload page</a>';
+            $this->Session->setFlash(__('Inventory could not be updated. %s<BR /><BR /> %s',$errstr, $gotoimport),'default',array('class'=>'alert alert-danger'));
+	return $this->redirect(array('controller' => 'inventories', 'action' => 'index'));
+        
+    }
+    
+    public function downloadsamplefile() {
+		
+	$filename = $target_path = WWW_ROOT."sampledata/Delivrd_sample_inventory.csv"; // of course find the exact filename....        
+	header('Pragma: public');
+	header('Expires: 0');
+	header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+	header('Cache-Control: private', false); // required for certain browsers 
+	header('Content-Type: application/csv');
+
+	header('Content-Disposition: attachment; filename="'. basename($filename) . '";');
+	header('Content-Transfer-Encoding: binary');
+	header('Content-Length: ' . filesize($filename));
+
+	readfile($filename);
+
+	exit;
+	}
+
+	public function saveQuantity() {
+       
+        $response['status'] = false;
+      	$qty = $this->request->data['quantity'];
+      	$id = $this->request->data['product_id'];
+      	$inventory_id = $this->request->data['inventory_id'];
+      	$sentqty = 0;
+		$recqty = 0;
+            if ($this->request->is('post')) {
+            	$this->request->data['Inventory']['id'] = $inventory_id;
+                $this->request->data['Inventory']['quantity'] = $qty;
+                $this->request->data['Inventory']['comments'] = '';
+                $current_inv = $this->Inventory->find('first', array('conditions' => array('Inventory.id' => $inventory_id)));
+                $product = $this->Inventory->find('first', array('conditions' => array('Product.id'  => $current_inv['Inventory']['product_id'])));
+           		$delta = $current_inv['Inventory']['quantity'] - $this->request->data['Inventory']['quantity'];
+				if($delta > 0)
+				{
+				$sentqty = abs($delta);
+				}
+				if($delta < 0)
+				{
+				$recqty = abs($delta);
+				}
+                
+       	//check if damaged qty is enables
+                
+		//$this->request->data('Inventory.warehouse_id',$warehouseid);
+		if ($this->Inventory->save($this->request->data)) {
+			
+			$this->loadModel('OrdersLine');
+			$data = array(
+			'OrdersLine' => array(
+				'order_id' => 4294967294,
+				'line_number' => 1,
+				'type' => 3,
+				'product_id'  => $current_inv['Inventory']['product_id'],
+				'quantity' => $this->request->data['Inventory']['quantity'],
+				'receivedqty' => $recqty,
+				'damagedqty' => 0,
+				'sentqty' => $sentqty,
+				'unit_price' => $product['Product']['value'],
+				'total_line' => $product['Product']['value'] * abs($delta),
+				'foc' => '',
+				'warehouse_id' => $current_inv['Inventory']['warehouse_id'],
+				'return' => '',
+				'comments' => $this->request->data['Inventory']['comments'],
+				'user_id' => $this->Auth->user('id')
+				)
+			);
+			unset($this->OrdersLine->validate['sentqty']);
+
+		// prepare the model for adding a new entry
+		//$this->OrdersLine->create();
+		// save the data
+				$this->OrdersLine->save($data);
+				$response['status'] = true;
+                $response['message'] = 'Your quantity has been save.';
+                $response['value'] = $qty;
+				
+			} else {
+				$response['message'] = 'error';
+            	$response['status'] = false;
+			}
+          }      
+                
+        echo json_encode($response);
+        exit;
+    } 
+
+    public function create() {
+    	
+ 	  	$success ='';
+        if(1 == 1){
+        // Instialize varriables
+	        $errors = array();
+	        if(!isset($this->request->data['Inventory']['tquantity'])) {
+    			$this->request->data['Inventory']['tquantity'] = 1;
+    		}
+	        
+	        $this->checkinventoryexist($this->request->data['Inventory']['id']);
+			if (!$this->Inventory->exists($this->request->data['Inventory']['id'])) {
+				throw new NotFoundException(__('Invalid inventory'));
+			}
+
+			$sentqty = 0;
+			$recqty = 0;
+			$this->Inventory->recursive = 2;
+			$loptions = array('conditions' => array('Inventory.' . $this->Inventory->primaryKey => $this->request->data['Inventory']['id']));
+			$current_inv = $this->Inventory->find('first', $loptions);
+			$availableinv = $current_inv['Inventory']['quantity'];
+			$this->request->data['Inventory']['warehouse_id'] = $current_inv['Inventory']['warehouse_id'];
+	        $sourcesafetystock = $current_inv['Product']['safety_stock'];
+	        $sourcereorderpoint = $current_inv['Product']['reorder_point'];
+	        $product = $this->Inventory->find('first', array('conditions' => array('Product.id'  => $current_inv['Inventory']['product_id'])));
+	        if($this->request->is('ajax')) { 
+		  		if($this->request->data['Inventory']['tquantity'] < 0 )
+		        {
+		            $errors = 'Transaction quantity must be greater than 0.';
+		            $status = false;
+		        }
+		        if($availableinv < $this->request->data['Inventory']['tquantity'] && isset($this->request->data['Inventory']['ttype']) && $this->request->data['Inventory']['ttype'] == 'GI')
+	            {
+	                $errors = 'You are trying to issue a quantity greater than quantity available.';
+	                $status = false;
+	            }
+	            if(isset($this->request->data['Inventory']['ttype']))
+				{
+					$ttype = $this->request->data['Inventory']['ttype'];
+					$tquantity = $this->request->data['Inventory']['tquantity'];
+		                            //if user has locations enabled, we get warehouse from grgi page
+	                    if($this->Session->read('locationsactive') == 1)
+	                    {
+	                    $warehouseid = $this->request->data['Inventory']['warehouse_id'];
+	                    } else {
+	                    $warehouseid = $this->Session->read('default_warehouse');
+	                    }
+				} else {
+					// function was called from another function rather than from GRGI page
+					$ttype = $grgi;
+					$tquantity = $quantity;
+					$this->request->data('Inventory.id',$id);
+				}
+				if($ttype == 'GI')
+				{
+					$direction = -1;
+					$linetype = 5;
+					$sentqty = $tquantity;
+	                if(!isset($warehouseid))
+	                    $warehouseid = $this->request->data['Inventory']['warehouse_id_from'];
+						
+				}
+				else if($ttype == 'GR')
+				{
+					$direction = 1;	
+					$linetype = 6;
+					$recqty = $tquantity;
+		            if(!isset($warehouseid))
+		             $warehouseid = $this->request->data['Inventory']['warehouse_id_to'];				
+						
+				} else {
+					$errors = 'You did not select Issue from Inventory or Receive to Inventory. Please try again.';
+					$status = false;
+				}
+
+				$new_inv = $current_inv['Inventory']['quantity'] + $direction * $tquantity;
+				$this->request->data('Inventory.quantity',$new_inv);
+
+				if ($this->Inventory->save($this->request->data)) {
+
+					if($current_inv['Inventory']['quantity'] == 0)
+			            $current_inv['Inventory']['quantity'] = $this->request->data['Inventory']['tquantity'];
+		
+					$this->loadModel('OrdersLine');
+					$data = array(
+					'OrdersLine' => array(
+						'order_id' => 4294967294,
+						'line_number' => 1,
+						'type' => $linetype,
+						'product_id'  => $current_inv['Inventory']['product_id'],
+						'quantity' => $current_inv['Inventory']['quantity'],
+						'receivedqty' => $recqty,
+						'damagedqty' => 0,
+						'sentqty' => $sentqty,
+						'unit_price' => $product['Product']['value'],
+						'total_line' => $product['Product']['value'] * abs($this->request->data['Inventory']['tquantity']),
+						'foc' => '',
+						'warehouse_id' => $warehouseid,
+						'return' => '',
+						'comments' => $this->request->data['Inventory']['comments'],
+						'user_id' => $this->Auth->user('id')
+					)
+					);
+
+					// save the data
+					$this->OrdersLine->create();
+					$linecreated = $this->OrdersLine->save($data);
+					if(!isset($grgi))
+					{
+						$success = 'Inventory quantity update successfully';
+						$current_inv = $this->Inventory->find('first', $loptions);
+						$status = true;
+					}
+				} else {
+						$errors = 'Inventory quantity could not be updated. Please, try again.';
+						$success = 'Inventory quantity could not be updated. Please, try again.';
+						$status = false;
+				}
+		  	}
+		  	else {
+				$options = array('conditions' => array('Inventory.' . $this->Inventory->primaryKey => $id));
+				$this->request->data = $this->Inventory->find('first', $options);
+	  		} 
+
+	  		$products = $this->Inventory->Product->find('all', array('contain' => array('Product'), 'fields' => array('Product.name', 'Product.imageurl')));
+		
+			$warehouses = $this->Inventory->Warehouse->find('list',array('conditions' => array('Warehouse.id' => $current_inv['Inventory']['warehouse_id'],'Warehouse.user_id' => $this->Auth->user('id'))));
+	 
+	    	$this->set(compact('product','warehouses','availableinv','sourcesafetystock','sourcereorderpoint'));
+
+        } else {
+            // Get validation errors
+            $errors = (!$userId) ? array('auth' => 'You have looged out. Please login again.') : $this->Inventory->validationErrors;
+        }
+        
+       
+        // Set varriables for use on view ctp file
+        $this->set(compact('errors', 'id', 'success', 'status', 'current_inv'));
+  
+    }  
+
+    public function issueTransfer() {
+    	$this->loadModel('Serial');
+    	$this->loadModel('OrdersLine');
+    	if($this->request->is('ajax')) {
+    		$loptions = array('conditions' => array('Inventory.' . $this->Inventory->primaryKey => $this->request->data['Inventory']['id']));
+			$inv = $this->Inventory->find('first', $loptions);
+			$availableinv = $inv['Inventory']['quantity'];
+			$serialdata = $this->Serial->find('first', array('conditions' => array('serialnumber' => $this->request->data['Inventory']['serial_no'])));
+
+			if($availableinv < 1)
+            {
+                $success = 'You are trying to deduct a quantity is greater than quantity available.';
+                $current_inv['qty'] = $availableinv;
+                $current_inv['id'] = $this->request->data['Inventory']['id'];
+                $status = false;
+            }
+            elseif($serialdata['Serial']['instock'] == 0) {
+            	$success = 'Serial number is out of stock.';
+                $current_inv['qty'] = $availableinv;
+                $current_inv['id'] = $this->request->data['Inventory']['id'];
+                $status = false;
+            }
+            else {
+            	$this->Inventory->id = $this->request->data['Inventory']['id'];
+				$this->Inventory->saveField('quantity', $availableinv - 1);
+				  $linetype = 5;
+				  $sentqty = 1;
+				  $data = array(
+					'OrdersLine' => array(
+						'order_id' => 4294967294,
+						'line_number' => 1,
+						'type' => $linetype,
+						'product_id'  => $inv['Inventory']['product_id'],
+						'quantity' => $inv['Inventory']['quantity'],
+						'receivedqty' => 0,
+						'damagedqty' => 0,
+						'sentqty' => $sentqty,
+						'unit_price' => $inv['Product']['value'],
+						'total_line' => $inv['Product']['value'] * abs(1),
+						'foc' => '',
+						'warehouse_id' => $inv['Inventory']['warehouse_id'],
+						'serial' => $this->request->data['Inventory']['serial_no'],
+						'return' => '',
+						'comments' => $this->request->data['Inventory']['comments'],
+						'user_id' => $this->Auth->user('id')
+					)
+					);
+			  	$this->OrdersLine->create();
+				$linecreated = $this->OrdersLine->save($data);
+				$this->Serial->id = $serialdata['Serial']['id'];
+				$this->Serial->saveField('warehouse_id', '');
+				$this->Serial->saveField('instock', 0);
+				$success = 'Inventory quantity deduct successfully.';
+				$current_inv['qty'] = $availableinv - 1;
+                $current_inv['id'] = $this->request->data['Inventory']['id'];
+                $status = true;
+            }
+            $this->set(compact('errors', 'id', 'success', 'status', 'current_inv'));
+    	}	
+    }
+
+    public function serialTransfer() { 
+    	$this->loadModel('Serial');
+    	$this->loadModel('OrdersLine');
+    	if($this->request->is('ajax')) {
+    		$loptions = array('conditions' => array('Inventory.' . $this->Inventory->primaryKey => $this->request->data['Inventory']['id']));
+			$sourceinv = $this->Inventory->find('first', $loptions);
+			$destinv = $this->Inventory->find('first',array('conditions' => array('Inventory.product_id'  => $sourceinv['Inventory']['product_id'],'Inventory.warehouse_id'=> $this->request->data['Inventory']['warehouse_id'])));
+			// pr($destinv);die;
+			$availableinv = $sourceinv['Inventory']['quantity'];
+
+			if($availableinv < 1)
+            {
+                $success = 'You are trying to deduct a quantity is greater than quantity available.';
+                $current_inv['qty'] = $availableinv;
+                $current_inv['id'] = $this->request->data['Inventory']['id'];
+                $status = false;
+            }
+            else {
+            	if($sourceinv) {
+        			$this->Inventory->id = $sourceinv['Inventory']['id'];
+					$this->Inventory->saveField('quantity', $sourceinv['Inventory']['quantity'] - 1);
+					$linetype = 5;
+					$sentqty = 1;
+					$data = array(
+					'OrdersLine' => array(
+						'order_id' => 4294967294,
+						'line_number' => 1,
+						'type' => $linetype,
+						'product_id'  => $sourceinv['Inventory']['product_id'],
+						'quantity' => $sourceinv['Inventory']['quantity'],
+						'receivedqty' => 0,
+						'damagedqty' => 0,
+						'sentqty' => $sentqty,
+						'unit_price' => $sourceinv['Product']['value'],
+						'total_line' => $sourceinv['Product']['value'] * abs(1),
+						'foc' => '',
+						'warehouse_id' => $sourceinv['Inventory']['warehouse_id'],
+						'return' => '',
+						'comments' => $this->request->data['Inventory']['comments'],
+						'user_id' => $this->Auth->user('id')
+					)
+					);
+
+					// save the data
+					$this->OrdersLine->create();
+					$linecreated = $this->OrdersLine->save($data);
+        		}         
+
+				if($destinv) {
+					$this->Inventory->id = $destinv['Inventory']['id'];
+					$this->Inventory->saveField('quantity', $destinv['Inventory']['quantity'] + 1);
+					$linetype = 6;
+					$recqty = 1;
+					$data = array(
+					'OrdersLine' => array(
+						'order_id' => 4294967294,
+						'line_number' => 1,
+						'type' => $linetype,
+						'product_id'  => $destinv['Inventory']['product_id'],
+						'quantity' => $destinv['Inventory']['quantity'],
+						'receivedqty' => $recqty,
+						'damagedqty' => 0,
+						'sentqty' => 0,
+						'unit_price' => $destinv['Product']['value'],
+						'total_line' => $destinv['Product']['value'] * abs(1),
+						'foc' => '',
+						'warehouse_id' => $this->request->data['Inventory']['warehouse_id'],
+						'return' => '',
+						'comments' => $this->request->data['Inventory']['comments'],
+						'user_id' => $this->Auth->user('id')
+					)
+					);
+
+					// save the data
+					$this->OrdersLine->create();
+					$linecreated = $this->OrdersLine->save($data);
+				}
+				else {
+					$data = array(
+					'Inventory' => array(
+						'product_id' => $sourceinv['Inventory']['product_id'],
+						'user_id' => $this->Auth->user('id'),
+						'dcop_user_id' => $this->Auth->user('id'),
+						'warehouse_id' => $this->request->data['Inventory']['warehouse_id'],
+						'quantity' => 1
+					)
+					);
+					$this->Inventory->create();
+					$invcreated = $this->Inventory->save($data);
+					$linetype = 6;
+					$recqty = 1;
+					$data = array(
+					'OrdersLine' => array(
+						'order_id' => 4294967294,
+						'line_number' => 1,
+						'type' => $linetype,
+						'product_id'  => $invcreated['Inventory']['product_id'],
+						'quantity' => $invcreated['Inventory']['quantity'],
+						'receivedqty' => $recqty,
+						'damagedqty' => 0,
+						'sentqty' => 0,
+						'unit_price' => $sourceinv['Product']['value'],
+						'total_line' => $sourceinv['Product']['value'] * abs(1),
+						'foc' => '',
+						'warehouse_id' => $this->request->data['Inventory']['warehouse_id'],
+						'return' => '',
+						'comments' => $this->request->data['Inventory']['comments'],
+						'user_id' => $this->Auth->user('id')
+					)
+					);
+
+					// save the data
+					$this->OrdersLine->create();
+					$linecreated = $this->OrdersLine->save($data);
+				}
+				$serialdata = $this->Serial->find('first', array('conditions' => array('serialnumber' => $this->request->data['Inventory']['serial_no'])));
+				$this->Serial->id = $serialdata['Serial']['id'];
+				$this->Serial->saveField('warehouse_id', $this->request->data['Inventory']['warehouse_id']);
+				
+				$success = 'Inventory quantity update successfully.';
+				$current_inv['qty'] = ($this->request->data['Inventory']['warehouse_id'] == $sourceinv['Inventory']['warehouse_id']) ? $availableinv + 1 : $availableinv - 1;
+                $current_inv['id'] = $this->request->data['Inventory']['id'];
+                $status = true;
+            }
+            $this->set(compact('errors', 'id', 'success', 'status', 'current_inv'));
+    	}	
+    }
+	
+}
+
+

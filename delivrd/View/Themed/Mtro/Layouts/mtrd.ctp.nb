@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<!--
+Template Name: Metronic - Responsive Admin Dashboard Template build with Twitter Bootstrap 3.3.1
+Version: 3.6.1
+Author: KeenThemes
+Website: http://www.keenthemes.com/
+Contact: support@keenthemes.com
+Follow: www.twitter.com/keenthemes
+Like: www.facebook.com/keenthemes
+Purchase: http://themeforest.net/item/metronic-responsive-admin-dashboard-template/4021469?ref=keenthemes
+License: You must have a valid license purchased only from themeforest(the above link) in order to legally use the theme for your project.
+-->
+<!--[if IE 8]> <html lang="en" class="ie8 no-js"> <![endif]-->
+<!--[if IE 9]> <html lang="en" class="ie9 no-js"> <![endif]-->
+<!--[if !IE]><!-->
+<html lang="en" ng-app="delivrd-app">
+<!--<![endif]-->
+<!-- BEGIN HEAD -->
+<head>
+<meta charset="utf-8"/>
+<title>Inventory Management and Order Management</title>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+<meta content="Delivrd - Free Inventory Management and Order Fulfillment" name="description"/>
+<meta content="" name="author"/>
+<!-- BEGIN GLOBAL MANDATORY STYLES -->
+<link href="//fonts.googleapis.com/css?family=Open+Sans:400,300,600,700&subset=all" rel="stylesheet" type="text/css">
+<?php echo $this->Html->css('/assets/global/plugins/font-awesome/css/font-awesome.min.css'); ?>
+<?php echo $this->Html->css('/assets/global/plugins/simple-line-icons/simple-line-icons.min.css'); ?>
+<?php echo $this->Html->css('/assets/global/plugins/bootstrap/css/bootstrap.min.css'); ?>
+<?php echo $this->Html->css('/assets/global/plugins/uniform/css/uniform.default.css'); ?>
+<?php echo $this->Html->css('/assets/global/plugins/bootstrap-switch/css/bootstrap-switch.min.css'); ?>
+
+<!-- END GLOBAL MANDATORY STYLES -->
+<!-- BEGIN PAGE LEVEL STYLES -->
+<?php echo $this->Html->css('/assets/global/plugins/select2/select2.css'); ?>
+<?php echo $this->Html->css('/assets/global/plugins/datatables/plugins/bootstrap/dataTables.bootstrap.css'); ?>
+<?php echo $this->Html->css('/assets/global/plugins/bootstrap-datepicker/css/datepicker.css'); ?>
+<?php echo $this->Html->css('/assets/global/plugins/bootstrap-datepicker/css/datepicker3.css'); ?>
+<?php echo $this->Html->css('/assets/global/plugins/bootstrap-datetimepicker/css/bootstrap-datetimepicker.min.css'); ?>
+<?php echo $this->Html->css('/assets/global/plugins/bootstrap-timepicker/css/bootstrap-timepicker.min.css'); ?>
+<?php echo $this->Html->css('/assets/global/plugins/jquery-minicolors/jquery.minicolors.css'); ?>
+
+
+
+<!-- END PAGE LEVEL STYLES -->
+<!-- BEGIN THEME STYLES -->
+<?php echo $this->Html->css('/assets/global/css/components-md.css',array( 'id' => 'style_components')); ?>
+<?php echo $this->Html->css('/assets/global/css/plugins-md.css'); ?>
+<?php echo $this->Html->css('/assets/global/css/plugins.css'); ?>
+<?php echo $this->Html->css('/assets/admin/layout/css/layout.css'); ?>
+<?php echo $this->Html->css('/assets/admin/layout/css/themes/darkblue.css'); ?>
+<?php echo $this->Html->css('/assets/admin/layout/css/custom.css'); ?>
+<?php echo $this->Html->css('/assets/global/css/joyride-2.1.css'); ?>
+<?php echo $this->Html->css('/js/jquery-ui/jquery-ui.css'); ?>
+<?php echo $this->Html->css('/css/toastr.min.css'); ?>
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/smoothness/jquery-ui.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+
+<!-- Begin Inspectlet Embed Code -->
+
+<?php if($this->request->host() == 'delivrdapp.com') { ?>
+	<script type="text/javascript" id="inspectletjs">
+	window.__insp = window.__insp || [];
+	__insp.push(['wid', 1049596160]);
+	(function() {
+	function __ldinsp(){var insp = document.createElement('script'); insp.type = 'text/javascript'; insp.async = true; insp.id = "inspsync"; insp.src = ('https:' == document.location.protocol ? 'https' : 'http') + '://cdn.inspectlet.com/inspectlet.js'; var x = document.getElementsByTagName('script')[0]; x.parentNode.insertBefore(insp, x); };
+	document.readyState != "complete" ? (window.attachEvent ? window.attachEvent('onload', __ldinsp) : window.addEventListener('load', __ldinsp, false)) : __ldinsp();
+	})();
+	</script>
+<?php } ?>
+<script type="text/javascript" >
+	var siteUrl = '<?php echo Router::url('/', true); ?>';
+</script>
+<!-- End Inspectlet Embed Code -->
+<?php if($this->request->host() == 'delivrdapp.com') { ?>
+	<!-- Google Tag Manager -->
+	<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+	new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+	j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+	'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+	})(window,document,'script','dataLayer','GTM-K6M6R5N');</script>
+<?php } ?>
+<!-- End Google Tag Manager -->
+<!-- END THEME STYLES -->
+
+<link rel="shortcut icon" href="/favicon.ico"/>
+</head>
+<!-- END HEAD -->
+<!-- BEGIN BODY -->
+<!-- DOC: Apply "page-header-fixed-mobile" and "page-footer-fixed-mobile" class to body element to force fixed header or footer in mobile devices -->
+<!-- DOC: Apply "page-sidebar-closed" class to the body and "page-sidebar-menu-closed" class to the sidebar menu element to hide the sidebar by default -->
+<!-- DOC: Apply "page-sidebar-hide" class to the body to make the sidebar completely hidden on toggle -->
+<!-- DOC: Apply "page-sidebar-closed-hide-logo" class to the body element to make the logo hidden on sidebar toggle -->
+<!-- DOC: Apply "page-sidebar-hide" class to body element to completely hide the sidebar on sidebar toggle -->
+<!-- DOC: Apply "page-sidebar-fixed" class to have fixed sidebar -->
+<!-- DOC: Apply "page-footer-fixed" class to the body element to have fixed footer -->
+<!-- DOC: Apply "page-sidebar-reversed" class to put the sidebar on the right side -->
+<!-- DOC: Apply "page-full-width" class to the body element to have full width page without the sidebar menu -->
+<body class="page-md page-header-fixed page-quick-sidebar-over-content ">
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-K6M6R5N"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+<!-- BEGIN HEADER -->
+<div class="page-header md-shadow-z-1-i navbar navbar-fixed-top">
+	<!-- BEGIN HEADER INNER -->
+	<div class="page-header-inner">
+		<!-- BEGIN LOGO -->
+		<div class="page-logo">
+			<a href="/">
+			<img src=<?php echo Configure::read('InAppLogoURL') ?> alt="logo" class="logo-default"/>
+			</a>
+			<div class="menu-toggler sidebar-toggler hide">
+				<!-- DOC: Remove the above "hide" to enable the sidebar toggler button on header -->
+			</div>
+		</div>
+		<!-- END LOGO -->
+		<!-- BEGIN RESPONSIVE MENU TOGGLER -->
+		<a href="javascript:;" class="menu-toggler responsive-toggler" data-toggle="collapse" data-target=".navbar-collapse">
+		</a>
+		<!-- END RESPONSIVE MENU TOGGLER -->
+		<!-- BEGIN TOP NAVIGATION MENU -->
+		<div class="top-menu">
+		<!-- $cenvertedTime = date('Y-m-d',strtotime('+30 day',strtotime($this->Session->read('Auth.User.created')))); -->
+		<!-- $remaining_days = $today->diff($expireDay)->format('%R%a'); -->
+
+		<!-- new
+		$cenvertedTime = date('Y-m-d',strtotime('-30 day',strtotime($today1)));
+		$created = new DateTime($this->Session->read('Auth.User.created'));
+		$remaining_days = $created->diff($expireDay)->format('%R%a'); -->
+		<?php if($this->Session->read('Auth.User.role') !== 'paid') {
+				$today = new DateTime();
+				$today1 = date_format($today, 'Y-m-d');
+				$startTime = date("Y-m-d");
+				$cenvertedTime = date('Y-m-d',strtotime('+30 day',strtotime($this->Session->read('Auth.User.created'))));
+
+				$expireDay = new DateTime($cenvertedTime);
+				$created = new DateTime($this->Session->read('Auth.User.created'));
+				$remaining_days = $today->diff($expireDay)->format('%R%a');
+				$remaining_days  = ($remaining_days > 0) ? $remaining_days : 0;
+
+				if($this->Session->read('Auth.User.paid') == 1 || $this->Session->read('Auth.User.locationsactive') == 1) {
+						echo '<span class="username username-hide-on-mobile" style="color:white;margin: 0px 21px 0px 0px;    font-size: 14px;">' .$remaining_days .' days of free trial left!</span><a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=WEYVWFC35BA84" taraget="" class="btn" style="margin: 6px 13px 8px 10px;border-radius: 6px;color: #fff;background-color: #f19071;border-color: #f19071;">Subscribe To Delivrd</a>';
+
+					}
+				}  ?>
+			<ul class="nav navbar-nav pull-right">
+
+
+				<!-- BEGIN USER LOGIN DROPDOWN -->
+				<!-- DOC: Apply "dropdown-dark" class after below "dropdown-extended" to change the dropdown styte -->
+				<li class="dropdown dropdown-user">
+					<a href="#" class="dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" data-close-others="true">
+
+					<span class="username username-hide-on-mobile">
+					Hello,
+					<?php if(!empty($this->Session->read('Auth.User.username')))
+							echo $this->Session->read('Auth.User.username');
+						  else
+						    echo $this->Session->read('Auth.User.email'); ?>
+					</span>
+					<i class="fa fa-angle-down"></i>
+					</a>
+					<ul class="dropdown-menu dropdown-menu-default">
+
+						<li>
+							<a href="<?php echo Router::url(array('plugin' => 'users','controller' => 'users', 'action' => 'editmy'), true); ?>">
+							<i class="icon-user"></i> My Profile </a>
+						</li>
+						<li>
+							<a href="<?php echo Router::url(array('plugin' => 'users','controller' => 'users', 'action' => 'edit'), true); ?>">
+							<i class="icon-settings"></i> Settings </a>
+						</li>
+                                                 <?php if($this->Session->read('is_admin') == 1 || $this->Session->read('is_admin') == 3) { ?>
+                                                <li>
+							<a href="<?php echo Router::url(array('plugin' => false,'controller' => 'integrations', 'action' => 'index'), true); ?>">
+							<i class="icon-puzzle"></i> Integrations </a>
+						</li>
+                                                 <?php } ?>
+						<li class="divider">
+						</li>
+						<li>
+						<?php echo $this->Html->link(__('<i class="icon-key"></i> Log Out'), array('plugin' => 'users', 'controller'=> 'users','action' => 'logout'),array('escape'=> false)); ?>
+						</li>
+					</ul>
+				</li>
+				<!-- END USER LOGIN DROPDOWN -->
+				<!-- BEGIN QUICK SIDEBAR TOGGLER -->
+				<!-- DOC: Apply "dropdown-dark" class after below "dropdown-extended" to change the dropdown styte -->
+				<li class="dropdown dropdown-quick-sidebar-toggler">
+					<a href="/users/logout" class="dropdown-toggle">
+					<i class="icon-logout"></i>
+					</a>
+				</li>
+				<!-- END QUICK SIDEBAR TOGGLER -->
+			</ul>
+		</div>
+		<!-- END TOP NAVIGATION MENU -->
+	</div>
+	<!-- END HEADER INNER -->
+</div>
+<!-- END HEADER -->
+<div class="clearfix">
+</div>
+<!-- BEGIN CONTAINER -->
+<div class="page-container">
+	<!-- BEGIN SIDEBAR -->
+	<div class="page-sidebar-wrapper">
+		<!-- DOC: Set data-auto-scroll="false" to disable the sidebar from auto scrolling/focusing -->
+		<!-- DOC: Change data-auto-speed="200" to adjust the sub menu slide up/down speed -->
+		<div class="page-sidebar navbar-collapse collapse">
+			<!-- BEGIN SIDEBAR MENU -->
+			<!-- DOC: Apply "page-sidebar-menu-light" class right after "page-sidebar-menu" to enable light sidebar menu style(without borders) -->
+			<!-- DOC: Apply "page-sidebar-menu-hover-submenu" class right after "page-sidebar-menu" to enable hoverable(hover vs accordion) sub menu mode -->
+			<!-- DOC: Apply "page-sidebar-menu-closed" class right after "page-sidebar-menu" to collapse("page-sidebar-closed" class must be applied to the body element) the sidebar sub menu mode -->
+			<!-- DOC: Set data-auto-scroll="false" to disable the sidebar from auto scrolling/focusing -->
+			<!-- DOC: Set data-keep-expand="true" to keep the submenues expanded -->
+			<!-- DOC: Set data-auto-speed="200" to adjust the sub menu slide up/down speed -->
+			<ul class="page-sidebar-menu" data-keep-expanded="false" data-auto-scroll="true" data-slide-speed="200">
+				<!-- DOC: To remove the sidebar toggler from the sidebar you just need to completely remove the below "sidebar-toggler-wrapper" LI element -->
+				<li class="sidebar-toggler-wrapper">
+					<!-- BEGIN SIDEBAR TOGGLER BUTTON -->
+					<div class="sidebar-toggler">
+					</div>
+					<!-- END SIDEBAR TOGGLER BUTTON -->
+				</li>
+				<!-- DOC: To remove the search box from the sidebar you just need to completely remove the below "sidebar-search-wrapper" LI element -->
+				<li class="sidebar-search-wrapper">
+					<!-- BEGIN RESPONSIVE QUICK SEARCH FORM -->
+					<!-- DOC: Apply "sidebar-search-bordered" class the below search form to have bordered search box -->
+					<!-- DOC: Apply "sidebar-search-bordered sidebar-search-solid" class the below search form to have bordered & solid search box -->
+					<form action="/Dash/search" class="sidebar-search" id="DashIndexForm" method="get" accept-charset="utf-8" _lpchecked="1">
+						<a href="javascript:;" class="remove">
+						<i class="icon-close"></i>
+						</a>
+						<div class="input-group">
+							<input type="text" name="q" id="q" class="form-control" placeholder="Search...">
+							<span class="input-group-btn">
+							<a class="btn submit"><i class="icon-magnifier"></i></a>
+							</span>
+						</div>
+					</form>
+					<!-- END RESPONSIVE QUICK SEARCH FORM -->
+				</li>
+				<li class="start ">
+				  <?php echo $this->Html->link(__('<i class="icon-home"></i><span class="title">Dashboard</span>
+					<span class="arrow "></span>'), array('plugin' => false, 'controller'=> 'Dash','action' => 'ofindex'),array('escape'=> false)); ?>
+
+				</li>
+                  <?php if($this->Session->read('paid') == 1) { ?>
+					<li>
+						<a href="javascript:;">
+						<i class="icon-briefcase"></i>
+						<span class="title">Products & Inventory</span>
+						<span class="selected"></span>
+						<span class="arrow"></span>
+						</a>
+						<ul class="sub-menu">
+	                                             <?php } ?>
+							<li>
+							<?php echo $this->Html->link(__('<i class="icon-paper-clip"></i>
+								Products'), array('plugin' => false, 'controller'=> 'Products','action' => 'index'),array('escape'=> false)); ?>
+							</li>
+							<li>
+							<?php echo $this->Html->link(__('<i class="icon-pointer"></i>
+								Inventory List'), array('plugin' => false,'controller'=> 'Inventories','action' => 'index'),array('escape'=> false)); ?>
+							</li>
+							<li>
+							<?php echo $this->Html->link(__('<i class="icon-grid"></i>
+								Serial Numbers'), array('plugin' => false, 'controller'=> 'serials','action' => 'index'),array('escape'=> false)); ?>
+							</li>
+	                        <?php if($this->Session->read('paid') == 1) { ?>
+						</ul>
+	                        <?php } ?>
+					</li>
+				<li>
+                <?php if($this->Session->read('paid') == 1) { ?>
+					<a href="javascript:;">
+					<i class="icon-share"></i>
+					<span class="title">Partners</span>
+					<span class="arrow "></span>
+					</a>
+					<ul class="sub-menu">
+						<li>
+						<?php echo $this->Html->link(__('<i class="icon-puzzle"></i>
+							Suppliers'), array('plugin' => false, 'controller'=> 'suppliers','action' => 'index'),array('escape'=> false)); ?>
+						</li>
+						<li>
+						<?php echo $this->Html->link(__('<i class="icon-puzzle"></i>
+							Resources'), array('plugin' => false,'controller'=> 'resources','action' => 'index'),array('escape'=> false)); ?>
+						</li>
+						<li>
+						<?php echo $this->Html->link(__('<i class="icon-feed"></i>
+							Bins'), array('plugin' => false,'controller'=> 'bins','action' => 'index'),array('escape'=> false)); ?>
+						</li>
+						<li>
+						<?php echo $this->Html->link(__('<i class="icon-equalizer"></i>
+							Sales Channel'), array('plugin' => false,'controller'=> 'schannels','action' => 'index'),array('escape'=> false)); ?>
+						</li>
+                           <?php if($this->Session->read('is_admin') == 3 || $this->Session->read('is_admin') == 1) { ?>
+						<li>
+						<?php echo $this->Html->link(__('<i class="icon-envelope"></i>
+							Couriers'), array('plugin' => false,'controller'=> 'couriers','action' => 'index'),array('escape'=> false)); ?>
+						</li>
+                           <?php } ?>
+					</ul>
+				</li>
+				<li>
+					<a href="javascript:;">
+					<i class="icon-size-actual"></i>
+					<span class="title">Inbound Processing</span>
+					<span class="arrow "></span>
+					</a>
+					<ul class="sub-menu">
+						<li>
+						<?php echo $this->Html->link(__('<i class="icon-shuffle"></i>
+							Replenishment Orders'), array('plugin' => false,'controller'=> 'orders','action' => 'index', 'index' => 2),array('escape'=> false)); ?>
+
+                        <?php if($this->Session->read('is_admin') == 3 || $this->Session->read('is_admin') == 1) { ?>
+						<li>
+						<a href="<?php echo Router::url(array('controller'=>'shipments','action'=>'index', 'index' => 0));?>">
+							<i class="icon-plane"></i>
+							Inbound Shipments</a>
+						</li>
+                        <?php } ?>
+					</ul>
+				</li>
+				<li>
+					<a href="javascript:;">
+					<i class="icon-size-fullscreen"></i>
+					<span class="title">Outbound Processing</span>
+					<span class="arrow "></span>
+					</a>
+					<ul class="sub-menu">
+						<li>
+						<?php echo $this->Html->link(__('<i class="icon-basket-loaded"></i>
+							Sales Orders'), array('plugin' => false,'controller'=> 'orders','action' => 'index','index' => 1),array('escape'=> false)); ?>
+						</li>
+                        <?php if($this->Session->read('is_admin') == 3 || $this->Session->read('is_admin') == 1) { ?>
+						<li>
+						<?php echo $this->Html->link(__('<i class="icon-control-play"></i>
+							Waves'), array('controller'=> 'waves','action' => 'index'),array('escape'=> false)); ?>
+						</li>
+						<li>
+							<a href="<?php echo Router::url(array('plugin'=> false,'controller'=>'shipments','action'=>'index', 'index' => 1));?>">
+							<i class="icon-rocket"></i>
+							Outbound Shipments</a>
+						</li>
+	                    <?php } ?>
+
+					</ul>
+				</li>
+                <?php if($this->Session->read('is_admin') == 1) { ?>
+                   <li>
+					<a href="javascript:;">
+					<i class="icon-settings"></i>
+					<span class="title">Shipping Admin</span>
+					<span class="arrow "></span>
+					</a>
+					<ul class="sub-menu">
+                        <li>
+                        	<?php echo $this->Html->link(__('<i class="icon-feed"></i>
+							Shipments Monitor'), array('controller'=> 'shipments','action' => 'indexsh'),array('escape'=> false)); ?>
+						</li>
+                        <li>
+                        <?php echo $this->Html->link(__('<i class="icon-user"></i>
+							Partners Monitor'), array('plugin' => false,'controller'=> 'users','action' => 'index'),array('escape'=> false)); ?>
+						</li>
+					</ul>
+				</li>
+                                 <?php } ?>
+                                    <?php } ?>
+                                 <?php
+                                 if(isset($sidebar_ad))
+                                 {
+                                     if(sizeof($sidebar_ad) > 0) {
+                                     ?>
+                                <li>
+					<a href="javascript:;">
+					<i class="icon-basket"></i>
+					<span class="title">Recommended Supplies</span>
+					<span class="arrow open"></span>
+					</a>
+                                    <div style="text-align:center;">
+                               <?php echo $sidebar_ad['url']; ?>
+                                    </div>
+
+
+				</li>
+                                 <?php } }?>
+
+				</li>
+			</ul>
+			<!-- END SIDEBAR MENU -->
+		</div>
+	</div>
+	<!-- END SIDEBARRRR -->
+
+
+			<?php echo $content_for_layout; ?>
+
+
+	<!-- BEGIN FOOTER -->
+<div class="page-footer">
+	<div class="page-footer-inner">
+		 2017 © <?php echo Configure::read('OperatorName') ?>
+	</div>
+	<div class="scroll-to-top">
+		<i class="icon-arrow-up"></i>
+	</div>
+</div>
+<!-- END FOOTER -->
+<!-- BEGIN JAVASCRIPTS(Load javascripts at bottom, this will reduce page load time) -->
+<!-- BEGIN CORE PLUGINS -->
+<!--[if lt IE 9]>
+<script src="../../assets/global/plugins/respond.min.js"></script>
+<script src="../../assets/global/plugins/excanvas.min.js"></script>
+<![endif]-->
+<?php if(Configure::read('OperatorName') == 'Delivrd') { ?>
+<script type="text/javascript" src="https://assets.freshdesk.com/widget/freshwidget.js"></script>
+<script type="text/javascript">
+  FreshWidget.init("", {"queryString": "&widgetType=popup&formTitle=Help+%26+Support&submitThanks=Thank+you+for+you+feedback", "utf8": "✓", "widgetType": "popup", "buttonType": "text", "buttonText": "Support", "buttonColor": "white", "buttonBg": "#156400", "alignment": "2", "offset": "235px", "submitThanks": "Thank you for you feedback", "formHeight": "500px", "url": "https://delivrd.freshdesk.com"} );
+</script>
+ <?php } ?>
+
+<?php // echo $this->Html->script('/assets/global/plugins/jquery.min.js'); ?>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<?php echo $this->Html->script('/assets/global/plugins/jquery-migrate.min.js'); ?>
+<?php echo $this->Html->script('/js/jquery-1.12.4.js'); ?>
+<?php echo $this->Html->script('/js/jquery-ui/jquery-ui.js'); ?>
+<!-- IMPORTANT! Load jquery-ui-1.10.3.custom.min.js before bootstrap.min.js to fix bootstrap tooltip conflict with jquery ui tooltip -->
+<?php // echo $this->Html->script('/assets/global/plugins/jquery-ui/jquery-ui-1.10.3.custom.min.js'); ?>
+<?php echo $this->Html->script('/assets/global/plugins/bootstrap/js/bootstrap.min.js'); ?>
+<?php echo $this->Html->script('/assets/global/plugins/bootstrap-hover-dropdown/bootstrap-hover-dropdown.min.js'); ?>
+<?php echo $this->Html->script('/assets/global/plugins/jquery-slimscroll/jquery.slimscroll.min.js'); ?>
+<?php echo $this->Html->script('/assets/global/plugins/jquery.blockui.min.js'); ?>
+<?php echo $this->Html->script('/assets/global/plugins/jquery.cokie.min.js'); ?>
+<?php echo $this->Html->script('/assets/global/plugins/uniform/jquery.uniform.min.js'); ?>
+<?php echo $this->Html->script('/assets/global/plugins/bootstrap-switch/js/bootstrap-switch.min.js'); ?>
+<?php echo $this->Html->script('/assets/global/plugins/bootstrap-maxlength/bootstrap-maxlength.min.js'); ?>
+
+
+<!-- END CORE PLUGINS -->
+<!-- BEGIN PAGE LEVEL PLUGINS -->
+<?php echo $this->Html->script('/assets/global/plugins/jquery-validation/js/jquery.validate.min.js'); ?>
+<?php echo $this->Html->script('/assets/global/plugins/datatables/media/js/jquery.dataTables.min.js'); ?>
+<?php echo $this->Html->script('/assets/global/plugins/datatables/plugins/bootstrap/dataTables.bootstrap.js'); ?>
+<?php echo $this->Html->script('/assets/global/plugins/bootstrap-datepicker/js/bootstrap-datepicker.js'); ?>
+<?php echo $this->Html->script('/assets/global/plugins/bootstrap-datetimepicker/js/bootstrap-datetimepicker.min.js'); ?>
+<?php echo $this->Html->script('/assets/global/plugins/bootstrap-maxlength/bootstrap-maxlength.min.js'); ?>
+<?php echo $this->Html->script('/assets/global/plugins/jquery.pulsate.min.js'); ?>
+<?php echo $this->Html->script('/assets/global/plugins/jquery-minicolors/jquery.minicolors.min.js'); ?>
+<?php echo $this->Html->script('/assets/global/plugins/bootstrap-selectsplitter/bootstrap-selectsplitter.min.js'); ?>
+
+
+
+<!-- END PAGE LEVEL PLUGINS -->
+<!-- BEGIN PAGE LEVEL SCRIPTS -->
+<?php echo $this->Html->script('/assets/global/scripts/metronic.js'); ?>
+<?php echo $this->Html->script('/assets/admin/layout/scripts/layout.js'); ?>
+<?php echo $this->Html->script('/assets/admin/layout/scripts/demo.js'); ?>
+<?php echo $this->Html->script('/assets/global/scripts/datatable.js'); ?>
+<?php echo $this->Html->script('/assets/admin/pages/scripts/components-form-tools.js'); ?>
+<?php echo $this->Html->script('/assets/admin/pages/scripts/ecommerce-orders.js'); ?>
+<?php echo $this->Html->script('/assets/admin/pages/scripts/ui-general.js'); ?>
+<?php echo $this->Html->script('/assets/admin/pages/scripts/components-form-tools2.js'); ?>
+
+
+<?php echo $this->Html->script('/local/dateinit.js'); ?>
+<?php echo $this->Html->script('/assets/scripts/app.js'); ?>
+<?php echo $this->Html->script('/assets/global/plugins/jquery.cookie.js'); ?>
+<?php echo $this->Html->script('/assets/global/plugins/modernizr.mq.js'); ?>
+<?php echo $this->Html->script('/assets/global/plugins/jquery.joyride-2.1.js'); ?>
+<?php echo $this->Html->script('/assets/global/plugins/select2/select2.min.js'); ?>
+<?php echo $this->Html->script('/js/category.js'); ?>
+<?php echo $this->Html->script('/js/jquery-code-scanner.js'); ?>
+<?php echo $this->Html->script('/js/toastr.min.js'); ?>
+<?php echo $this->Html->script('/js/functions.js'); ?>
+<?php echo $this->Html->script('/js/angular.min.js'); ?>
+<?php echo $this->Html->script('/js/angular-apps.js'); ?>
+<?php echo $this->Html->script('/plugins/bootbox/bootbox.min.js'); ?>
+
+
+<script>
+$('.code-scan').codeScanner();
+
+function getModel(target){
+  var name = $(target).attr("name");
+  name_match = name.match(/data\[(.+)\]\[(.+)\]/);
+  return name_match[1];
+}
+
+function getField(target){
+  var name = $(target).attr("name");
+  name_match = name.match(/data\[(.+)\]\[(.+)\]/);
+  return name_match[2];
+}
+
+function getParentDiv(target){
+  return $(target).parent('div.input');
+}
+
+function getErrorMessageDiv(parentDiv){
+  return parentDiv.children("div.error-message");
+}
+
+function addErrorMessage(data,id){
+  $('#' + id).after("<div class='error-message'>" + data + "</div>");
+}
+
+function hasParentError(parentDiv){
+  parentDivClass = parentDiv.attr("class");
+  hasError = (typeof( parentDivClass ) != 'undefined' && parentDivClass.indexOf("error")!=-1);
+  return hasError;
+}
+
+function hasErrorMessage(parentDiv){
+  errorMessageDiv = parentDiv.find("div.error-message");
+  hasError = ( errorMessageDiv[0] !== undefined );
+  return hasError;
+}
+
+</script>
+<script>
+      $("#takeTheTour").click(function(e) {
+        $('#joyRideTipContent').joyride({
+          autoStart : true,
+          postStepCallback : function (index, tip) {
+          if (index == 8) {
+            $(this).joyride('set_li', false, 1);
+          }
+        },
+        modal:true,
+        expose: true
+        });
+      });
+      $(".multiple").select2({
+		  placeholder: "Select Bin"
+		});
+    </script>
+
+
+
+<!-- END PAGE LEVEL SCRIPTS -->
+<script>
+        jQuery(document).ready(function() {
+
+           Metronic.init(); // init metronic core components
+Layout.init(); // init current layout
+ComponentsFormTools2.init();
+// UIGeneral.init();•••••••
+DateInit.init();
+App.init();
+
+
+
+ EcommerceOrders.init();
+
+
+        });
+    </script>
+<?php if(Configure::read('OperatorName') == 'Delivrd' && $this->request->host() == 'delivrdapp.com') { ?>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-61652601-2', 'auto');
+  ga('send', 'pageview');
+
+</script>
+ <?php }  ?>
+<script type="text/javascript">
+$("#product").click(function (e) {
+  $("#add-product").attr("data-val", "product");
+});
+
+$("#stock").click(function (e) {
+ $("#add-product").attr("data-val", "stock");
+});
+
+$("#add-product").submit(function (e) {
+	e.preventDefault();
+    var formData = new FormData(this);
+    var formVal = $(this).attr("data-val");
+    $( ".error-message" ).remove();
+    $.ajax({
+        type: 'POST',
+        url: siteUrl + 'products/getproduct',
+        data: formData,
+        dataType: 'json',
+        contentType: false,
+        processData: false,
+        success: function (response) {
+
+            if(response.data){
+	           $.each(response.data, function(model, errors) {
+	               for (fieldName in this) {
+
+	                   var element = $("#" + camelcase(model + '_' + fieldName));
+	                   var create = $(document.createElement('div')).insertAfter(element);
+	                   create.addClass('error-message').text(this[fieldName][0]);
+	               }
+	           });
+	        } else {
+	        	$("#add-product")[0].reset();
+	        	if(formVal == 'stock') {
+		         	bootbox.alert({
+		         		message : "Now that you have created your first products, it's time to perform inventory transactions. Click on the 'Actions' button to count, issue and receive inventory.",
+		         		callback : function (result) {
+		        			url = siteUrl + 'inventories/index?create=1';
+					    	window.location.href = url;
+			         	}
+
+	              	});
+
+	            } else {
+	            	 if(response.status == true) {
+			           	 bootbox.alert(response.message, function(result){
+
+			             });
+			         }
+	            }
+
+	        }
+
+        }
+    });
+    return false;
+
+});
+
+function camelcase(inputstring) {
+    var a = inputstring.split('_'), i;
+    s = [];
+    for (i=0; i<a.length; i++){
+        s.push(a[i].charAt(0).toUpperCase() + a[i].substring(1));
+    }
+    s = s.join('');
+    return s;
+}
+
+
+$("#autocomplete").autocomplete({
+  source: function( request, response ) {
+  	$("#location-id").val('');
+  	$("#serial-number").val('');
+  	$("#pdt-type").val('');
+          $.ajax({
+                    url: siteUrl + 'products/get_auto_list',
+                    dataType: "json",
+                    data: {
+                        key: request.term
+                    },
+                    success: function( data, test ) {
+                    	if(data.location !== undefined)
+                    	 $("#location-id").val(data.location);
+
+                    	if(data.serialnumber !== undefined)
+                    	 $("#serial-number").val(data.serialnumber);
+
+                    	if(data.serialnumber !== undefined)
+                    	 $("#pdt-type").val(data.type);
+
+                        response( data.name );
+                    }
+          });
+      }
+});
+
+</script>
+
+
+<!-- <?php // echo $this->fetch('jsSection');
+//echo $this->fetch('ajax_validation'); ?> -->
+<!-- END JAVASCRIPTS -->
+</body>
+<!-- END BODY -->
+</html>
